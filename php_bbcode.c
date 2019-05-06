@@ -400,11 +400,29 @@ static PHP_FUNCTION(bbcode_create)
                 if (key && data != NULL) {
 					tmp_ht = HASH_OF(data);
 					if (tmp_ht) {
-						tmp_ht->u.v.nApplyCount++;
+						/* tmp_ht->u.v.nApplyCount++; */
+						#if PHP_VERSION_ID >= 70300
+							if (!(GC_FLAGS(tmp_ht) & GC_IMMUTABLE)) {
+								GC_PROTECT_RECURSION(tmp_ht);
+							}
+						#else
+							if (ZEND_HASH_APPLY_PROTECTION(tmp_ht)) {
+								tmp_ht->u.v.nApplyCount++;
+							}
+						#endif
 					}
 					_php_bbcode_add_element(parser, ZSTR_VAL(key), ZSTR_LEN(key), data TSRMLS_CC);
 					if (tmp_ht) {
-							tmp_ht->u.v.nApplyCount--;
+						/* tmp_ht->u.v.nApplyCount--; */
+						#if PHP_VERSION_ID >= 70300
+							if (!(GC_FLAGS(tmp_ht) & GC_IMMUTABLE)) {
+								GC_UNPROTECT_RECURSION(tmp_ht);
+							}
+						#else
+							if (ZEND_HASH_APPLY_PROTECTION(tmp_ht)) {
+								tmp_ht->u.v.nApplyCount--;
+							}
+						#endif
 					}
 				}
 			} ZEND_HASH_FOREACH_END();
